@@ -119,13 +119,13 @@ def dataPreperation(x, y):
         plt.subplots(figsize=(8, 6))
         plt.subplots_adjust(bottom=0.2)
         ax = plt.subplot(121)
-        plt.title("Original data + deleted data")
+        plt.title("Original deleted data")
         plt.scatter(x, y, 50, "b", ".", label="Data")
         plt.scatter(xDel, yDel, 50, "r", "x", label="Deleted Data")
         # Put a legend to the bottom of the current axis
         ax.legend(loc='center right', bbox_to_anchor=(0.8, -0.15))
         plt.subplot(122)
-        plt.title("Remaining data.")
+        plt.title("Remaining data")
         plt.scatter(x, y, 50, "b", ".")
 
         callback = DeletingData()
