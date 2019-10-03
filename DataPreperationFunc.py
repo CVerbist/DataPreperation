@@ -46,7 +46,7 @@ def extractingData(x, y, xDel, yDel):
 
         ax = plt.subplot(121)
         plt.scatter(x, y, 50, "b", ".", label="Data")
-        plt.scatter(xDel, yDel, 50, "r", ".", label="Deleted Data")
+        plt.scatter(xDel, yDel, 50, "r", "x", label="Deleted Data")
         # Put a legend to the bottom of the current axis
         ax.legend(loc='center right', bbox_to_anchor=(0.8, -0.10))
         axD = plt.subplot(122)
