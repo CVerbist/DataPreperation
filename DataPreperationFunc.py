@@ -1,56 +1,80 @@
 #!/usr/bin/env python
 
-
 from matplotlib import pyplot as plt
 import numpy
 from matplotlib.widgets import Button, RectangleSelector
 
 
-def line_select_callback(eclick, erelease):
-    'eclick and erelease are the press and release events'
-    x1, y1 = eclick.xdata, eclick.ydata
-    x2, y2 = erelease.xdata, erelease.ydata
+def lineSelectCallback(eClick, eRelease):
+    """
+    Gets the x,y coordinates of the click and release
+    :param eClick: Click event
+    :param eRelease: Release event
+    """
+    x1, y1 = eClick.xdata, eClick.ydata
+    x2, y2 = eRelease.xdata, eRelease.ydata
 
 
-
-def toggle_selector(event):
+def toggleSelector(event):
+    """
+    Pressing "q" will exit the selection procedure and take the drawn rectangle.
+    If no rectangle is drawn it will return (0, 0, 0, 1) resulting in no points being deleted
+    """
     print('Acquired rectangle.')
-    if event.key in ['Q', 'q'] and toggle_selector.RS.active:
-        toggle_selector.RS.set_active(False)
+    if event.key in ['Q', 'q'] and toggleSelector.RS.active:
+        toggleSelector.RS.set_active(False)
 
 
-def ExtractingData(x, y, xDel, yDel):
-
+def extractingData(x, y, xDel, yDel):
+    """
+    Method that will let you draw a square around the data you want to delete.
+    It will also show you the already deleted data if there is any.
+    :param x: remaining x-values of data points
+    :param y: remaining y-values of data points
+    :param xDel: x-values of already deleted points
+    :param yDel: y-values of already deleted points
+    :return: limits of rectangle, ie. [xmin, xmax, ymin, ymax]
+    """
     if numpy.size(xDel) == 0:
-        fig, axD = plt.subplots()
+        fig, axD = plt.subplots(figsize=(8, 6))
         plt.title(
             "Draw a rectangle with the mouse around the points you want to delete \n and press q to validate. \n You can adjust square after drawing.")
         plt.scatter(x, y)
 
     else:
-        fig = plt.figure()
+        plt.figure(figsize=(8, 6))
 
-        plt.subplot(121)
-        plt.scatter(x, y, 30, "b", ".", label = "Data")
-        plt.scatter(xDel, yDel, 30, "r", ".", label = "Deleted Data")
-        plt.legend()
+        ax = plt.subplot(121)
+        plt.scatter(x, y, 50, "b", ".", label="Data")
+        plt.scatter(xDel, yDel, 50, "r", ".", label="Deleted Data")
+        # Put a legend to the bottom of the current axis
+        ax.legend(loc='center right', bbox_to_anchor=(0.8, -0.10))
         axD = plt.subplot(122)
-        plt.scatter(x, y, 30, "b", ".")
+        plt.scatter(x, y, 50, "b", ".")
         plt.suptitle(
             "Draw a rectangle with the mouse around the points you want to delete \n and press q to validate, in the right subplot. \n You can adjust square after drawing.")
 
-    toggle_selector.RS = RectangleSelector(axD, line_select_callback,
+    toggleSelector.RS = RectangleSelector(axD, lineSelectCallback,
                                            drawtype='box', useblit=False,
                                            button=[1],
                                            spancoords='pixels',
                                            interactive=True)
-    plt.connect('key_press_event', toggle_selector)
+    plt.connect('key_press_event', toggleSelector)  # Connecting the "q" key to exit the drawing of the rectangle
     plt.show()
-    return toggle_selector.RS.extents  # Returns limits of rectangle, ie. [xmin, xmax, ymin, ymax]
+    return toggleSelector.RS.extents
 
 
 def dataPreperation(x, y):
-    class deletingData(object):
+    """
+    Main method that will determine which points are within the selected area
+    and subsequently delete them.
+    :param x: x-values of the data
+    :param y: y-values of the data
+    :return: Remaining x, y values and the deleted x, values
+    """
+
+    # Determines behavior of buttons, ie. continue with deleting or exit
+    class DeletingData(object):
         def delData(self, event):
             plt.close()
             print("Starting the deletion program.")
@@ -61,16 +85,19 @@ def dataPreperation(x, y):
             print("Exiting data deletion program.")
             userAns['delDat'] = False
 
-    userAns = {}
+    userAns = {}  # Used to store whether to continue or stop deleting points
     xDel = []
     yDel = []
 
-    fig, ax = plt.subplots()
+    plt.subplots(figsize=(8, 6))
     plt.subplots_adjust(bottom=0.2)
 
     plt.scatter(x, y)
 
-    callback = deletingData()
+    callback = DeletingData()
+
+    # Creating physical location of button
+
     axCont = plt.axes([0.81, 0.05, 0.1, 0.075])
     axDel = plt.axes([0.7, 0.05, 0.1, 0.075])
     bCont = Button(axCont, "Exit")
@@ -80,24 +107,28 @@ def dataPreperation(x, y):
     plt.show()
 
     while userAns['delDat']:
-        rectLim = ExtractingData(x, y, xDel, yDel)
+        rectLim = extractingData(x, y, xDel, yDel)
+
+        # Checking which points are within the drawn rectangle and subsequently delete them
         indDel = numpy.where((x > rectLim[0]) & (x < rectLim[1]) & (y > rectLim[2]) & (y < rectLim[3]))
         xDel = numpy.append(xDel, x[indDel])
         yDel = numpy.append(yDel, y[indDel])
         x = numpy.delete(x, indDel)
         y = numpy.delete(y, indDel)
-        fig, ax = plt.subplots()
+
+        plt.subplots(figsize=(8, 6))
         plt.subplots_adjust(bottom=0.2)
-        plt.subplot(121)
+        ax = plt.subplot(121)
         plt.title("Original data + deleted data")
-        plt.scatter(x, y, 30, "b", ".", label = "Data")
-        plt.scatter(xDel, yDel, 30, "r", ".", label = "Deleted Data")
-        plt.legend()
+        plt.scatter(x, y, 50, "b", ".", label="Data")
+        plt.scatter(xDel, yDel, 50, "r", "x", label="Deleted Data")
+        # Put a legend to the bottom of the current axis
+        ax.legend(loc='center right', bbox_to_anchor=(0.8, -0.15))
         plt.subplot(122)
         plt.title("Remaining data.")
-        plt.scatter(x, y, 30, "b", ".")
+        plt.scatter(x, y, 50, "b", ".")
 
-        callback = deletingData()
+        callback = DeletingData()
         axCont = plt.axes([0.81, 0.05, 0.1, 0.075])
         axDel = plt.axes([0.7, 0.05, 0.1, 0.075])
         bCont = Button(axCont, "Exit")
@@ -106,7 +137,6 @@ def dataPreperation(x, y):
         bDel.on_clicked(callback.delData)
 
         plt.show()
-        # break
 
     return x, y, xDel, yDel
 
